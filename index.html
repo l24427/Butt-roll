@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Devolução de MP (Bobinas) — V1.2 (Etiqueta + Memória)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#101a33; --muted:#9fb0d0; --text:#eaf0ff;
+      --accent:#4ea1ff; --ok:#6ee7b7; --warn:#ffd27a; --danger:#ff5a7a;
+      --radius:18px;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(180deg,#07102a, #0b1220); color:var(--text); }
+
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background:rgba(7,16,42,.70);
+      border-bottom:1px solid rgba(78,161,255,.12);
+    }
+    .topbar .wrap{ max-width:980px; margin:0 auto; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .title{ display:flex; flex-direction:column; gap:2px; }
+    .title h1{ margin:0; font-size:16px; letter-spacing:.2px; }
+    .title small{ color:var(--muted); font-size:12px; }
+
+    .actions{ display:flex; align-items:center; gap:10px; }
+    .iconBtn{
+      width:42px; height:42px; border-radius:14px;
+      border:1px solid rgba(159,176,208,.22);
+      background:rgba(16,26,51,.65);
+      color:var(--text);
+      display:grid; place-items:center;
+      cursor:pointer;
+    }
+    .iconBtn:hover{ border-color:rgba(78,161,255,.45); }
+
+    .wrap{ max-width:980px; margin:0 auto; padding:12px; }
+
+    .card{
+      background:rgba(16,26,51,.92);
+      border:1px solid rgba(78,161,255,.14);
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow:0 10px 28px rgba(0,0,0,.25);
+      margin:10px 0;
+    }
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .col{ flex:1 1 260px; }
+
+    label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
+
+    input[type="file"], select, input[type="text"], input[type="number"], textarea{
+      width:100%; padding:12px 12px; border-radius:14px;
+      border:1px solid rgba(159,176,208,.22);
+      background:rgba(7,16,42,.55); color:var(--text);
+      outline:none;
+    }
+
+    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px;
+      background:rgba(159,176,208,.12); border:1px solid rgba(159,176,208,.18); color:var(--muted); }
+    .pill.ok{ border-color:rgba(110,231,183,.45); background:rgba(110,231,183,.10); color:rgba(210,255,238,.95); }
+
+    .gridButtons{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+      gap:10px;
+      margin-top:10px;
+    }
+    .mpBtn{
+      text-align:left;
+      background:rgba(78,161,255,.10);
+      color:var(--text);
+      border:1px solid rgba(78,161,255,.18);
+      border-radius:16px;
+      padding:14px 12px;
+      cursor:pointer;
+      min-height:60px;
+      font-weight:800;
+    }
+    .mpBtn small{ display:block; margin-top:6px; color:var(--muted); font-weight:600; }
+    .mpBtn.active{ outline:2px solid rgba(110,231,183,.85); border-color:rgba(110,231,183,.55); }
+
+    .btn{
+      border:none; border-radius:16px; padding:13px 14px; cursor:pointer;
+      color:#031024; background:var(--accent); font-weight:900;
+      box-shadow:0 10px 18px rgba(78,161,255,.20);
+      width:100%;
+    }
+    .btn.secondary{ background:rgba(159,176,208,.12); color:var(--text); border:1px solid rgba(159,176,208,.22); box-shadow:none; }
+    .btn.ok{ background:var(--ok); color:#022014; box-shadow:0 10px 18px rgba(110,231,183,.18); }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+    .kv{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; }
+    .kv .box{
+      background:rgba(7,16,42,.42);
+      border:1px solid rgba(159,176,208,.16);
+      border-radius:16px;
+      padding:12px;
+    }
+    .kv strong{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:700; }
+
+    .diameterBox{
+      border:1px solid rgba(110,231,183,.35);
+      background:rgba(110,231,183,.10);
+      border-radius:var(--radius);
+      padding:14px;
+      margin-top:10px;
+    }
+    .diameterBox label{ margin-top:0; }
+    #dCurrent{
+      font-size:28px;
+      font-weight:900;
+      padding:18px 14px;
+      border-radius:18px;
+      border:2px solid rgba(110,231,183,.55);
+      background:rgba(7,16,42,.35);
+      text-align:center;
+    }
+
+    .result{
+      font-size:20px; font-weight:950; margin-top:10px;
+      padding:14px; border-radius:18px;
+      border:1px solid rgba(110,231,183,.35);
+      background:rgba(110,231,183,.10);
+    }
+
+    .warn{ color:var(--warn); font-size:12px; margin-top:8px; }
+    .footer{ font-size:12px; color:var(--muted); margin-top:8px; }
+
+    /* Modais */
+    .modalBackdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center; z-index:50;
+      padding:18px;
+    }
+    .modal{
+      width:min(560px, 100%);
+      border-radius:20px;
+      border:1px solid rgba(78,161,255,.18);
+      background:rgba(16,26,51,.96);
+      box-shadow:0 20px 50px rgba(0,0,0,.45);
+      padding:16px;
+    }
+    .modal h2{ margin:0 0 8px 0; font-size:16px; }
+    .modal .actionsRow{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+
+    /* Etiqueta */
+    #labelArea{
+      margin-top:12px;
+      border:1px dashed rgba(159,176,208,.35);
+      background:rgba(7,16,42,.35);
+      border-radius:16px;
+      padding:12px;
+    }
+    .label{
+      background:#fff; color:#111; border:1px solid #000; border-radius:10px;
+      width:100%; padding:10px; font-family: Arial, Helvetica, sans-serif;
+    }
+    .labelHeader{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+    .labelTitle{ font-weight:900; font-size:14px; }
+    .labelDate{ font-size:11px; text-align:right; }
+    .labelGrid{ display:grid; grid-template-columns: 1fr; gap:6px; margin-top:8px; }
+    .labelRow{ font-size:12px; }
+    .labelRow b{ display:inline-block; min-width:92px; }
+    .labelBig{ font-size:16px; font-weight:900; margin-top:6px; }
+
+    @media print{
+      body{ background:#fff; }
+      .topbar, .wrap, .modalBackdrop{ display:none !important; }
+      #printOnly{ display:block !important; }
+    }
+    #printOnly{ display:none; padding:0; margin:0; }
+
+    /* Ajudinha de caminho */
+    code.path{ display:block; padding:10px; border-radius:14px; border:1px solid rgba(159,176,208,.22);
+      background:rgba(7,16,42,.55); color:var(--text); overflow:auto; }
+  
+
+    /* Modo GitHub Pages: base carregada automaticamente do repositório */
+    #importBtn, #importHelpBackdrop { display:none !important; }
+
+</style>
+</head>
+<body>
+
+<div id="printOnly"></div>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="title">
+      <h1>Devolução de MP (Bobinas)</h1>
+      <small>V1.2 • Etiqueta + memória (salva no Chrome/Edge) • Importa 1 vez</small>
+    </div>
+    <div class="actions">
+      <button class="iconBtn" id="toggleSearch" title="Pesquisar MP">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <button class="iconBtn" id="importBtn" title="Importar/Atualizar base CSV">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 16V4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M7 9l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none" />
+
+  <section class="card" id="searchCard" style="display:none;">
+    <div class="row">
+      <div class="col">
+        <label>Pesquisar MP</label>
+        <input id="searchMp" type="text" placeholder="Digite parte do nome da MP…" />
+      </div>
+      <div class="col" style="display:flex; align-items:flex-end; gap:10px;">
+        <button id="clearBtn" class="btn secondary">Limpar seleção</button>
+      </div>
+    </div>
+    <div class="footer" id="status">Clique no ícone ⬆️ para importar o CSV.</div>
+    <div class="warn" id="warn"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="align-items:center; justify-content:space-between; gap:10px;">
+      <div>
+        <span class="pill" id="mpCount">MPs: 0</span>
+        <span class="pill" id="rowCount">Registros: 0</span>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+        <span class="pill" id="basePill">Base: não carregada</span>
+      </div>
+    </div>
+    <div class="footer" id="statusInline">Carregando base do GitHub…</div>
+    <div id="mpButtons" class="gridButtons"></div>
+  </section>
+
+  <section class="card">
+    <label>Opções (Código + Descrição)</label>
+    <select id="codeSelect" disabled>
+      <option value="">Selecione uma MP primeiro…</option>
+    </select>
+
+    <div class="kv" id="details" style="display:none;">
+      <div class="box"><strong>U/M</strong><input id="umEdit" type="text" placeholder="Ex.: KG, M2, M²" /></div>
+      <div class="box"><strong>Quantidade por Bobina</strong><input id="qtyEdit" type="number" inputmode="decimal" placeholder="0" /></div>
+      <div class="box"><strong>Diâmetro Bobina Nova (mm)</strong><input id="dNewEdit" type="number" inputmode="decimal" placeholder="0" /></div>
+      <div class="box"><strong>Diâmetro do Tubete (mm)</strong><input id="dCoreEdit" type="number" inputmode="decimal" placeholder="0" /></div>
+    </div>
+
+    <div class="diameterBox">
+      <label>Diâmetro atual medido (mm) — principal</label>
+      <input id="dCurrent" type="number" inputmode="decimal" placeholder="0" disabled />
+      <div class="warn" id="calcWarn"></div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div class="col"><button id="printBtn" class="btn secondary" disabled>Imprimir etiqueta de devolução</button></div>
+    </div>
+
+    <!-- calcBtn removido da UI: cálculo é automático -->
+    <button id="calcBtn" class="btn ok" style="display:none" disabled>Calcular sobra</button>
+
+    <div id="calcOut" style="display:none;">
+      <div class="result" id="resultText"></div>
+      <div class="footer" id="formulaNote"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Modal: ajuda para importar da pasta do Share -->
+<div class="modalBackdrop" id="importHelpBackdrop">
+  <div class="modal">
+    <h2>Importar base (dica rápida)</h2>
+    <div class="footer">
+      O navegador <b>não permite</b> abrir direto em uma pasta específica por segurança.
+      Mas você pode <b>copiar o caminho</b> e colar na barra do seletor de arquivos.
+    </div>
+
+    <label>Pasta recomendada</label>
+    <code class="path" id="sharePath">S:\Suzano\Projeto paperless\Devolução Materia prima</code>
+
+    <div class="actionsRow">
+      <button class="btn secondary" id="copyPathBtn">Copiar caminho</button>
+      <button class="btn ok" id="continueImportBtn">Continuar e escolher CSV</button>
+    </div>
+
+    <div class="footer" style="margin-top:10px;">
+      Dica: ao abrir a janela de arquivo, cole o caminho acima na barra de endereço do seletor e pressione Enter.
+    </div>
+  </div>
+</div>
+
+<!-- Modal print -->
+<div class="modalBackdrop" id="modalBackdrop">
+  <div class="modal">
+    <h2>Etiqueta de devolução</h2>
+    <label>Máquina</label>
+    <select id="machineSelect">
+      <option value="">Selecione…</option>
+      <option>FB12</option><option>FB14</option><option>FB15</option><option>FB16</option><option>FB17</option>
+      <option>PH01</option><option>PH02</option>
+    </select>
+
+    <label>Lote interno (opcional)</label>
+    <input id="lotInternal" type="text" placeholder="Ex.: 12345" />
+
+    <label>Responsável pela etiqueta</label>
+    <input id="madeBy" type="text" placeholder="Seu nome" />
+
+    <div id="labelArea"></div>
+
+    <div class="actionsRow">
+      <button class="btn secondary" id="cancelPrint">Cancelar</button>
+      <button class="btn ok" id="doPrint">Imprimir</button>
+    </div>
+    <div class="footer">A etiqueta abaixo é o que será impresso.</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/** =============================
+ *  Persistência (IndexedDB + localStorage fallback)
+ *  ============================= */
+const STORE_DB = 'mp_devolucao_db';
+const STORE_NAME = 'kv';
+const STORE_KEY = 'base_csv_v1';
+
+async function idbOpen(){
+  return await new Promise((resolve, reject) => {
+    const req = indexedDB.open(STORE_DB, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSet(key, value){
+  const db = await idbOpen();
+  return await new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(value, key);
+    tx.oncomplete = () => { db.close(); resolve(true); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function idbGet(key){
+  const db = await idbOpen();
+  return await new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = () => { db.close(); resolve(req.result || null); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  });
+}
+
+function lsSet(obj){
+  localStorage.setItem('mp_base_csv_v1', obj.csv);
+  localStorage.setItem('mp_base_csv_v1_name', obj.name || '');
+  localStorage.setItem('mp_base_csv_v1_when', obj.when || '');
+}
+function lsGet(){
+  const csv = localStorage.getItem('mp_base_csv_v1');
+  if(!csv) return null;
+  return { csv, name: localStorage.getItem('mp_base_csv_v1_name') || '', when: localStorage.getItem('mp_base_csv_v1_when') || '' };
+}
+
+async function saveBase(csvText, fileName){
+  const payload = { csv: csvText, name: fileName || '', when: new Date().toISOString() };
+  // 1) tenta IndexedDB
+  try{
+    await idbSet(STORE_KEY, payload);
+    // também salva no localStorage (redundância)
+    try{ lsSet(payload); }catch(e){}
+    return { ok:true, method:'IndexedDB' };
+  }catch(e){
+    // 2) fallback localStorage
+    try{
+      lsSet(payload);
+      return { ok:true, method:'localStorage' };
+    }catch(e2){
+      return { ok:false, method:'none', error: String(e2 || e) };
+    }
+  }
+}
+
+async function loadBase(){
+  // 1) IndexedDB
+  try{
+    const v = await idbGet(STORE_KEY);
+    if(v && v.csv) return { ...v, from:'IndexedDB' };
+  }catch(e){ /* ignora */ }
+  // 2) localStorage
+  try{
+    const v2 = lsGet();
+    if(v2 && v2.csv) return { ...v2, from:'localStorage' };
+  }catch(e){ /* ignora */ }
+  return null;
+}
+
+/** =============================
+ *  CSV parser
+ *  ============================= */
+function stripBom(text){ return text && text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text; }
+function sniffDelimiter(text){
+  const firstLine = stripBom(text).split(/\r?\n/)[0] || '';
+  const sc = (firstLine.match(/;/g) || []).length;
+  const cc = (firstLine.match(/,/g) || []).length;
+  return sc >= cc ? ';' : ',';
+}
+function parseCSV(csvText, delimiter){
+  const text = stripBom(csvText).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    const next = text[i+1];
+    if(c === '"'){
+      if(inQuotes && next === '"'){ field += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(c === delimiter && !inQuotes){
+      row.push(field.trim()); field = "";
+    } else if(c === '\n' && !inQuotes){
+      row.push(field.trim()); rows.push(row);
+      row = []; field = "";
+    } else {
+      field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field.trim()); rows.push(row); }
+  return rows.filter(r => r.some(v => v !== ""));
+}
+
+function numOrZero(v){
+  if (v === null || v === undefined) return 0;
+  const s = String(v).trim();
+  if (s === "") return 0;
+  const n = parseFloat(s.replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+function safeText(v){ return (v ?? "").toString().trim(); }
+function normalizeHeader(h){ return safeText(h).replace(/\s+/g, " ").toUpperCase(); }
+
+function calcSobraClamped({ qtdBobina, dAtual, dNovo, dTubete }){
+  qtdBobina = numOrZero(qtdBobina);
+  dAtual    = numOrZero(dAtual);
+  dNovo     = numOrZero(dNovo);
+  dTubete   = numOrZero(dTubete);
+
+  const denom = (dNovo*dNovo - dTubete*dTubete);
+  if (denom <= 0){
+    return { pctSobra: 0, sobra: 0, aviso: "Preencha D_novo e D_tubete (D_novo > D_tubete)." };
+  }
+
+  const raw = (dAtual*dAtual - dTubete*dTubete) / denom;
+  const pct = Math.max(0, Math.min(1, raw));
+
+  let aviso = "";
+  if (raw < 0) aviso = "D_atual menor que o tubete — ajustado para 0%.";
+  else if (raw > 1) aviso = "D_atual maior que bobina nova — ajustado para 100%.";
+
+  return { pctSobra: pct, sobra: qtdBobina * pct, aviso };
+}
+
+function formatNumberPT(n, decimals=2){
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+const COLS = {
+  A: "NOME MATERIA PRIMA",
+  B: "CÓDIGO",
+  C: "DESCRIÇÃO",
+  D: "U/M",
+  E: "Quantidade por Bobina (Kg ou M2)",
+  F: "Diâmetro da bobina nova (mm)",
+  G: "Diâmetro do tubete (mm)"
+};
+
+let data = [];
+let byName = new Map();
+let selectedName = "";
+let searchQuery = ""; // texto digitado no campo de busca
+let selectedRecord = null;
+let lastCalc = null;
+
+const el = {
+  importBtn: document.getElementById('importBtn'),
+  csvFile: document.getElementById('csvFile'),
+  toggleSearch: document.getElementById('toggleSearch'),
+  searchCard: document.getElementById('searchCard'),
+  searchMp: document.getElementById('searchMp'),
+  clearBtn: document.getElementById('clearBtn'),
+
+  status: document.getElementById('status'),
+  statusInline: document.getElementById('statusInline'),
+  warn: document.getElementById('warn'),
+  calcWarn: document.getElementById('calcWarn'),
+
+  mpButtons: document.getElementById('mpButtons'),
+  mpCount: document.getElementById('mpCount'),
+  rowCount: document.getElementById('rowCount'),
+  basePill: document.getElementById('basePill'),
+
+  codeSelect: document.getElementById('codeSelect'),
+  details: document.getElementById('details'),
+  umEdit: document.getElementById('umEdit'),
+  qtyEdit: document.getElementById('qtyEdit'),
+  dNewEdit: document.getElementById('dNewEdit'),
+  dCoreEdit: document.getElementById('dCoreEdit'),
+  dCurrent: document.getElementById('dCurrent'),
+
+  calcBtn: document.getElementById('calcBtn'),
+  printBtn: document.getElementById('printBtn'),
+  calcOut: document.getElementById('calcOut'),
+  resultText: document.getElementById('resultText'),
+  formulaNote: document.getElementById('formulaNote'),
+
+  modalBackdrop: document.getElementById('modalBackdrop'),
+  machineSelect: document.getElementById('machineSelect'),
+  lotInternal: document.getElementById('lotInternal'),
+  madeBy: document.getElementById('madeBy'),
+  labelArea: document.getElementById('labelArea'),
+  cancelPrint: document.getElementById('cancelPrint'),
+  doPrint: document.getElementById('doPrint'),
+  printOnly: document.getElementById('printOnly'),
+
+  importHelpBackdrop: document.getElementById('importHelpBackdrop'),
+  copyPathBtn: document.getElementById('copyPathBtn'),
+  continueImportBtn: document.getElementById('continueImportBtn'),
+  sharePath: document.getElementById('sharePath')
+};
+
+function setStatus(msg, isError=false){
+  if (el.status) el.status.textContent = msg;
+  el.statusInline.textContent = msg;
+  const color = isError ? '#ff8aa1' : 'var(--muted)';
+  if (el.status) el.status.style.color = color;
+  el.statusInline.style.color = color;
+}
+function setWarn(msg=""){ el.warn.textContent = msg; }
+function setCalcWarn(msg=""){ el.calcWarn.textContent = msg; }
+
+function setBasePill(loaded, info=''){
+  el.basePill.className = loaded ? 'pill ok' : 'pill';
+  el.basePill.textContent = loaded ? `Base: carregada${info ? ' • ' + info : ''}` : 'Base: não carregada';
+}
+
+function buildIndex(records){
+  byName = new Map();
+  for(const r of records){
+    const name = r[COLS.A];
+    if(!byName.has(name)) byName.set(name, []);
+    byName.get(name).push(r);
+  }
+}
+
+function renderButtons(filter=""){
+  el.mpButtons.innerHTML = "";
+  const names = Array.from(byName.keys());
+  const f = (filter || "").trim().toLowerCase();
+
+  const isNum = f && /^\d+$/.test(f);
+  const apply = isNum ? (f.length >= 1) : (f.length >= 2);
+
+  const filtered = (!apply) ? names : names.filter(name => {
+    const n = name.toLowerCase();
+    // Se for texto: filtra somente pelo nome da MP
+    if(!isNum) return n.includes(f);
+
+    // Se for numérico: filtra por código/descrição e também por nome
+    if(n.includes(f)) return true;
+    const recs = byName.get(name) || [];
+    return recs.some(r => {
+      const codigo = safeText(r[COLS.B]).toLowerCase();
+      const desc = safeText(r[COLS.C]).toLowerCase();
+      return codigo.includes(f) || desc.includes(f);
+    });
+  });
+
+  el.mpCount.textContent = `MPs: ${filtered.length}`;
+  el.rowCount.textContent = `Registros: ${data.length}`;
+
+  filtered.sort((a,b)=>a.localeCompare(b, 'pt-BR'));
+
+  const frag = document.createDocumentFragment();
+  for(const name of filtered){
+    const btn = document.createElement('button');
+    btn.className = 'mpBtn' + (name === selectedName ? ' active' : '');
+    const count = byName.get(name)?.length ?? 0;
+    btn.innerHTML = `${name}<small>${count} opção(ões) de código</small>`;
+    btn.addEventListener('click', () => selectName(name));
+    frag.appendChild(btn);
+  }
+  el.mpButtons.appendChild(frag);
+}
+
+
+function resetSelection(){
+  selectedName = "";
+  selectedRecord = null;
+  lastCalc = null;
+
+  // Limpa também o campo de busca (para o botão funcionar como o operador espera)
+  searchQuery = '';
+  el.searchMp.value = '';
+
+  el.codeSelect.innerHTML = `<option value="">Selecione uma MP primeiro…</option>`;
+  el.codeSelect.disabled = true;
+
+  el.details.style.display = 'none';
+  el.umEdit.value = '';
+  el.qtyEdit.value = '';
+  el.dNewEdit.value = '';
+  el.dCoreEdit.value = '';
+
+  el.dCurrent.value = '';
+  el.dCurrent.disabled = true;
+
+  if(el.calcBtn) el.calcBtn.disabled = true;
+  el.printBtn.disabled = true;
+
+  el.calcOut.style.display = 'none';
+  el.resultText.textContent = '';
+  el.formulaNote.textContent = '';
+
+  setWarn('');
+  setCalcWarn('');
+
+  renderButtons('');
+}
+
+function selectName(name){
+  selectedName = name;
+  selectedRecord = null;
+  lastCalc = null;
+
+  const records = byName.get(name) || [];
+
+  // Se o usuário estiver buscando por CÓDIGO (numérico), filtra o combo. Se for nome/texto, mantém todos os códigos visíveis.
+  const q = (searchQuery || '').trim();
+  const qIsNum = /^\d+$/.test(q);
+  populateCodeSelect(records, qIsNum ? q : '');
+  el.codeSelect.disabled = false;
+
+  el.details.style.display = 'none';
+  el.dCurrent.value = '';
+  el.dCurrent.disabled = true;
+  if(el.calcBtn) el.calcBtn.disabled = true;
+  el.printBtn.disabled = true;
+  el.calcOut.style.display = 'none';
+
+  setCalcWarn('');
+  renderButtons(el.searchMp.value || '');
+}
+
+function populateCodeSelect(records, filterText){
+  const f = (filterText || '').trim().toLowerCase();
+  const isNum = f && /^\d+$/.test(f);
+  const apply = isNum ? (f.length >= 1) : (f.length >= 2);
+
+  el.codeSelect.innerHTML = `<option value="">Selecione o Código + Descrição…</option>`;
+  const frag = document.createDocumentFragment();
+  records.forEach((r, idx) => {
+    if(apply){
+      const codigo = safeText(r[COLS.B]).toLowerCase();
+      const desc = safeText(r[COLS.C]).toLowerCase();
+      if(!codigo.includes(f) && !desc.includes(f)) return;
+    }
+    const opt = document.createElement('option');
+    opt.value = String(idx);
+    opt.textContent = `${safeText(r[COLS.B])} — ${safeText(r[COLS.C])}`;
+    frag.appendChild(opt);
+  });
+  el.codeSelect.appendChild(frag);
+  el.codeSelect.disabled = false;
+}
+
+function tryAutoSelectFromSearch(){
+  const q = (searchQuery || '').trim();
+  // Auto-seleção recomendada apenas para busca numérica (código)
+  if(!/^\d+$/.test(q)) return;
+  if(q.length < 1) return;
+
+  const matches = [];
+  for(const [name, recs] of byName.entries()){
+    recs.forEach((r, idx) => {
+      const codigo = safeText(r[COLS.B]);
+      if(codigo === q) matches.push({ name, idx });
+    });
+  }
+
+  if(matches.length !== 1) return;
+  const m = matches[0];
+
+  if(selectedName !== m.name) selectName(m.name);
+  el.codeSelect.value = String(m.idx);
+  selectRecordByIndex(m.idx);
+}
+
+
+function selectRecordByIndex(idx){
+  const records = byName.get(selectedName) || [];
+  selectedRecord = records[idx] || null;
+  lastCalc = null;
+
+  if(!selectedRecord){
+    el.details.style.display = 'none';
+    el.dCurrent.disabled = true;
+    if(el.calcBtn) el.calcBtn.disabled = true;
+    el.printBtn.disabled = true;
+    return;
+  }
+
+  el.umEdit.value = safeText(selectedRecord[COLS.D]);
+  el.qtyEdit.value = numOrZero(selectedRecord[COLS.E]);
+  el.dNewEdit.value = numOrZero(selectedRecord[COLS.F]);
+  el.dCoreEdit.value = numOrZero(selectedRecord[COLS.G]);
+
+  el.details.style.display = 'grid';
+  el.dCurrent.disabled = false;
+  if(el.calcBtn) el.calcBtn.disabled = false;
+  el.printBtn.disabled = true;
+  el.dCurrent.focus();
+}
+
+function doCalc(){
+  setCalcWarn('');
+  if(!safeText(el.dCurrent.value)){
+    if(typeof clearCalcAndPrint === 'function') clearCalcAndPrint();
+    return;
+  }
+  if(!selectedRecord){
+    setCalcWarn('Selecione um Código + Descrição.');
+    return;
+  }
+
+  const res = calcSobraClamped({
+    qtdBobina: el.qtyEdit.value,
+    dAtual: el.dCurrent.value,
+    dNovo: el.dNewEdit.value,
+    dTubete: el.dCoreEdit.value
+  });
+
+  const um = safeText(el.umEdit.value);
+  el.resultText.textContent = `Sobra estimada: ${formatNumberPT(res.sobra, 2)} ${um}`.trim();
+  el.formulaNote.textContent = `% sobra: ${formatNumberPT(res.pctSobra*100, 2)}% (0–100%). ${res.aviso || ''}`.trim();
+  el.calcOut.style.display = 'block';
+
+  lastCalc = {
+    sobra: res.sobra,
+    pct: res.pctSobra,
+    aviso: res.aviso,
+    um,
+    codigo: safeText(selectedRecord[COLS.B]),
+    descricao: safeText(selectedRecord[COLS.C]),
+    nomeMP: selectedName,
+    dAtual: numOrZero(el.dCurrent.value),
+    dNovo: numOrZero(el.dNewEdit.value),
+    dTubete: numOrZero(el.dCoreEdit.value),
+    qtdBobina: numOrZero(el.qtyEdit.value),
+    createdAt: new Date()
+  };
+
+  el.printBtn.disabled = false;
+}
+
+function processCSVText(text, originLabel=''){
+  try{
+    const delimiter = sniffDelimiter(text);
+    const rows = parseCSV(text, delimiter);
+
+    if(rows.length < 2){
+      setStatus('CSV inválido ou vazio.', true);
+      return false;
+    }
+
+    const header = rows[0].map(normalizeHeader);
+    const idx = {};
+    header.forEach((h,i)=> idx[h]=i);
+
+    const required = Object.values(COLS).map(c => c.toUpperCase());
+    const missing = required.filter(r => !(r in idx));
+    if(missing.length){
+      setStatus('CSV não contém todas as colunas esperadas.', true);
+      setWarn('Faltando: ' + missing.join(' | '));
+      return false;
+    }
+
+    data = rows.slice(1).map(r => {
+      const obj = {};
+      for(const k of Object.values(COLS)) obj[k] = r[idx[k.toUpperCase()]] ?? '';
+      obj[COLS.A] = safeText(obj[COLS.A]);
+      return obj;
+    }).filter(o => o[COLS.A] !== '');
+
+    buildIndex(data);
+    renderButtons(el.searchMp.value || '');
+
+    setStatus(`Base carregada: ${data.length} linhas${originLabel ? ' • ' + originLabel : ''}.`);
+    return true;
+  }catch(err){
+    console.error(err);
+    setStatus('Erro ao processar o CSV.', true);
+    setWarn(String(err));
+    return false;
+  }
+}
+
+async function readFileAsTextRobust(file){
+  const buffer = await file.arrayBuffer();
+  const tryEnc = ['utf-8','windows-1252','iso-8859-1'];
+  for(const enc of tryEnc){
+    try{
+      const dec = new TextDecoder(enc, { fatal:false });
+      const text = dec.decode(buffer);
+      const bad = (text.match(/\uFFFD/g) || []).length;
+      if(bad < 5) return text;
+    }catch(e){}
+  }
+  return new TextDecoder('utf-8', { fatal:false }).decode(buffer);
+}
+
+/** Etiqueta */
+function buildLabelHTML(machine){
+  if(!lastCalc) return '';
+  const dt = lastCalc.createdAt;
+  const dateStr = dt.toLocaleString('pt-BR');
+  const sobraTxt = `${formatNumberPT(lastCalc.sobra,2)} ${lastCalc.um}`.trim();
+
+  const loteInterno = safeText(el.lotInternal?.value || '');
+  const responsavel = safeText(el.madeBy?.value || '');
+
+  return `
+    <div class="label">
+      <div class="labelHeader">
+        <div>
+          <div class="labelTitle">ETIQUETA DEVOLUÇÃO — MP</div>
+          <div style="font-size:11px;">Planta: Suzano</div>
+        </div>
+        <div class="labelDate">
+          <div><b>Data:</b> ${dateStr}</div>
+          <div><b>Máquina:</b> ${machine || '—'}</div>
+        </div>
+      </div>
+      <div class="labelGrid">
+        <div class="labelRow"><b>Material (SKU):</b> ${lastCalc.codigo || '—'}</div>
+        <div class="labelRow"><b>Descrição:</b> ${lastCalc.descricao || '—'}</div>
+        <div class="labelRow"><b>Nome (conhecido):</b> ${lastCalc.nomeMP || '—'}</div>
+        <div class="labelRow"><b>Diâmetro atual:</b> ${lastCalc.dAtual} mm</div>
+        <div class="labelRow"><b>Diâmetro novo:</b> ${lastCalc.dNovo} mm</div>
+        <div class="labelRow"><b>Tubete:</b> ${lastCalc.dTubete} mm</div>
+        ${loteInterno ? `<div class="labelRow"><b>Lote interno:</b> ${loteInterno}</div>` : ''}
+        <div class="labelRow"><b>Responsável:</b> ${responsavel || '—'}</div>
+        <div class="labelBig">Sobra: ${sobraTxt}</div>
+      </div>
+    </div>
+  `;
+}
+
+function openPrintModal(){
+  el.machineSelect.value = '';
+  el.labelArea.innerHTML = buildLabelHTML('');
+  el.modalBackdrop.style.display = 'flex';
+}
+function closePrintModal(){ el.modalBackdrop.style.display = 'none'; }
+function doPrint(){
+  const machine = safeText(el.machineSelect.value);
+  if(!machine){ alert('Selecione a máquina.'); return; }
+  const labelHTML = buildLabelHTML(machine);
+  el.labelArea.innerHTML = labelHTML;
+  el.printOnly.innerHTML = labelHTML;
+  closePrintModal();
+  setTimeout(() => window.print(), 100);
+}
+
+/** Import help modal */
+function openImportHelp(){ el.importHelpBackdrop.style.display='flex'; }
+function closeImportHelp(){ el.importHelpBackdrop.style.display='none'; }
+
+async function copyToClipboard(text){
+  // tenta clipboard API
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    // fallback: cria textarea temporário
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    }catch(e2){
+      return false;
+    }
+  }
+}
+
+/** Eventos */
+el.toggleSearch.addEventListener('click', () => {
+  const show = el.searchCard.style.display === 'none';
+  el.searchCard.style.display = show ? 'block' : 'none';
+  if(show) setTimeout(()=>el.searchMp.focus(), 50);
+});
+
+el.searchMp.addEventListener('input', () => {
+  searchQuery = el.searchMp.value || '';
+  renderButtons(searchQuery);
+
+  const q = searchQuery.trim();
+  const qIsNum = /^\d+$/.test(q);
+
+  if(selectedName){
+    const recs = byName.get(selectedName) || [];
+    populateCodeSelect(recs, qIsNum ? q : '');
+  }
+
+  if(qIsNum) tryAutoSelectFromSearch();
+});
+el.clearBtn.addEventListener('click', resetSelection);
+
+// Ao clicar importar: abre ajudinha e depois seletor de arquivos
+el.importBtn.addEventListener('click', () => openImportHelp());
+
+el.copyPathBtn.addEventListener('click', async () => {
+  const ok = await copyToClipboard(el.sharePath.textContent);
+  setWarn(ok ? 'Caminho copiado. Cole na janela de arquivo.' : 'Não consegui copiar. Selecione o texto e copie manualmente.');
+});
+
+el.continueImportBtn.addEventListener('click', () => {
+  closeImportHelp();
+  el.csvFile.click();
+});
+
+el.importHelpBackdrop.addEventListener('click', (ev) => {
+  if(ev.target === el.importHelpBackdrop) closeImportHelp();
+});
+
+el.csvFile.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if(!file) return;
+  // permite escolher o mesmo arquivo novamente
+  el.csvFile.value = '';
+
+  setWarn('');
+  setCalcWarn('');
+  setStatus('Lendo arquivo…');
+  resetSelection();
+
+  try{
+    const text = await readFileAsTextRobust(file);
+    const ok = processCSVText(text, `importado (${file.name})`);
+    if(ok){
+      const saved = await saveBase(text, file.name);
+      const dt = new Date().toLocaleString('pt-BR');
+      if(saved.ok){
+        setBasePill(true, `${file.name} • salvo (${saved.method})`);
+        setStatus(`Base carregada e salva (${saved.method}) • ${dt}.`);
+      } else {
+        setBasePill(true, `${file.name} • NÃO salvou`);
+        setWarn('A base carregou, mas NÃO foi possível salvar no navegador.\nVerifique se o Chrome está limpando dados ao fechar ou se está em modo anônimo.');
+      }
+    }
+  }catch(err){
+    console.error(err);
+    setStatus('Erro ao ler o CSV.', true);
+  }
+});
+
+el.codeSelect.addEventListener('change', (e) => {
+  const v = e.target.value;
+  if(v === ''){
+    selectedRecord = null;
+    lastCalc = null;
+    el.details.style.display = 'none';
+    el.dCurrent.disabled = true;
+    if(el.calcBtn) el.calcBtn.disabled = true;
+    el.printBtn.disabled = true;
+    el.calcOut.style.display = 'none';
+    return;
+  }
+  selectRecordByIndex(parseInt(v,10));
+});
+
+// calcBtn removido: cálculo agora é automático
+
+function clearCalcAndPrint(){
+  el.printBtn.disabled = true;
+  el.calcOut.style.display = 'none';
+  el.resultText.textContent = '';
+  el.formulaNote.textContent = '';
+}
+
+// Checagem suave (não bloqueia digitação): apenas orienta e impede liberar impressão/cálculo enquanto estiver fora dos limites.
+function softCheckDiametroAtual(){
+  const dStr = safeText(el.dCurrent.value);
+  if(dStr===''){
+    setCalcWarn('');
+    return false;
+  }
+  const dAtual = numOrZero(dStr);
+  const dMax = numOrZero(el.dNewEdit.value);
+  const dTubete = numOrZero(el.dCoreEdit.value);
+
+  if(dTubete>0 && dAtual>0 && dAtual < dTubete){
+    setCalcWarn(`Atenção: ${dAtual} mm está menor que o tubete (${dTubete} mm). Termine de digitar para validar.`);
+    return false;
+  }
+
+  if(dMax>0 && dAtual > dMax){
+    setCalcWarn(`Atenção: ${dAtual} mm está maior que o diâmetro máximo (${dMax} mm). Termine de digitar para validar.`);
+    return false;
+  }
+
+  setCalcWarn('');
+  return true;
+}
+
+// Validação final (ao finalizar a edição): pode abrir pop-up e ajustar/limpar conforme regra.
+function validateDiametroAtualFinal(){
+  const dStr = safeText(el.dCurrent.value);
+  if(dStr===''){
+    setCalcWarn('');
+    return false;
+  }
+  const dAtual = numOrZero(dStr);
+  const dMax = numOrZero(el.dNewEdit.value);
+  const dTubete = numOrZero(el.dCoreEdit.value);
+
+  if(dTubete>0 && dAtual>0 && dAtual < dTubete){
+    const msg = `Erro: valor (${dAtual} mm) menor que o diâmetro do tubete (${dTubete} mm). Confira.`;
+    setCalcWarn(msg);
+    alert(msg);
+    el.dCurrent.value = '';
+    el.dCurrent.focus();
+    return false;
+  }
+
+  if(dMax>0 && dAtual > dMax){
+    const msg = `Valor maior que o diâmetro máximo (${dMax} mm) e será setado o máximo se você der OK.`;
+    setCalcWarn(msg);
+    const ok = confirm(msg);
+    if(ok){
+      el.dCurrent.value = String(dMax);
+      setCalcWarn(`Ajustado para o máximo (${dMax} mm).`);
+      return true;
+    }
+    el.dCurrent.value = '';
+    el.dCurrent.focus();
+    return false;
+  }
+
+  setCalcWarn('');
+  return true;
+}
+
+function tryAutoCalcSoft(){
+  if(!selectedRecord){ clearCalcAndPrint(); return; }
+  if(!safeText(el.dCurrent.value)){ clearCalcAndPrint(); return; }
+  if(!softCheckDiametroAtual()){ clearCalcAndPrint(); return; }
+  doCalc();
+}
+
+function tryAutoCalcFinal(){
+  if(!selectedRecord){ clearCalcAndPrint(); return; }
+  if(!safeText(el.dCurrent.value)){ clearCalcAndPrint(); return; }
+  if(!validateDiametroAtualFinal()){ clearCalcAndPrint(); return; }
+  doCalc();
+}
+
+[el.qtyEdit, el.dNewEdit, el.dCoreEdit].forEach(inp => {
+  inp.addEventListener('input', () => tryAutoCalcSoft());
+});
+
+el.dCurrent.addEventListener('input', () => tryAutoCalcSoft());
+el.dCurrent.addEventListener('change', () => tryAutoCalcFinal());
+
+el.printBtn.addEventListener('click', openPrintModal);
+el.cancelPrint.addEventListener('click', closePrintModal);
+el.modalBackdrop.addEventListener('click', (ev) => { if(ev.target === el.modalBackdrop) closePrintModal(); });
+el.machineSelect.addEventListener('change', () => { el.labelArea.innerHTML = buildLabelHTML(safeText(el.machineSelect.value)); });
+if(el.lotInternal) el.lotInternal.addEventListener('input', () => { el.labelArea.innerHTML = buildLabelHTML(safeText(el.machineSelect.value)); });
+if(el.madeBy) el.madeBy.addEventListener('input', () => { el.labelArea.innerHTML = buildLabelHTML(safeText(el.machineSelect.value)); });
+el.doPrint.addEventListener('click', doPrint);
+
+/** Init */
+async function fetchCSVFromRepo(){
+  // Arquivo deve estar no mesmo diretório do index.html no GitHub Pages
+  const url = new URL('Base_MP.csv', document.baseURI);
+  // Anti-cache para garantir que a última base publicada seja usada
+  url.searchParams.set('v', Date.now().toString());
+
+  const resp = await fetch(url.toString(), { cache: 'no-store' });
+  if(!resp.ok) throw new Error(`Falha ao baixar base: ${resp.status} ${resp.statusText}`);
+  return await resp.text();
+}
+
+(async function init(){
+  setWarn('');
+  setCalcWarn('');
+  setStatus('Carregando base do GitHub…');
+  renderButtons('');
+  setBasePill(false);
+
+  let loaded = false;
+
+  // 1) Tenta carregar direto do repositório (GitHub Pages)
+  try{
+    const csvText = await fetchCSVFromRepo();
+    resetSelection();
+    const ok = processCSVText(csvText, 'do GitHub');
+    if(!ok) throw new Error('CSV inválido/inesperado');
+
+    // Salva localmente para permitir uso offline / caso o fetch falhe depois
+    try{ await saveBase(csvText, 'Base_MP.csv'); } catch(e){ /* ignore */ }
+
+    setBasePill(true, 'Base_MP.csv • GitHub');
+    setStatus('Base carregada automaticamente do GitHub.');
+    loaded = true;
+  } catch(err){
+    console.warn('Falha ao carregar base do GitHub:', err);
+  }
+
+  // 2) Fallback: se falhar (offline, etc.), tenta carregar da memória do navegador
+  if(!loaded){
+    const saved = await loadBase();
+    if(saved && saved.csv){
+      const when = saved.when ? new Date(saved.when).toLocaleString('pt-BR') : '';
+      const info = `${saved.name || 'base'} • ${when || 'sem data'} • ${saved.from}`;
+      const ok = processCSVText(saved.csv, `da memória (${saved.from})`);
+      if(ok){
+        setBasePill(true, info);
+        setStatus(`Base carregada da memória (offline) • ${info}.`);
+        loaded = true;
+      }
+    }
+  }
+
+  if(!loaded){
+    setBasePill(false);
+    setStatus('Não foi possível carregar a base do GitHub e não existe base salva neste navegador.', true);
+  }
+})();
+
+</script>
+</body>
+</html>
